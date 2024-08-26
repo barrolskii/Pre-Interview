@@ -1,0 +1,42 @@
+name: Build, Test, And Deploy
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+jobs:
+  build_and_test:
+    strategy:
+      matrix:
+        configuration: [ Debug, Release ]
+    runs-on: windows-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    # Required dependency. GitHub Actions Windows agents don't come with .NET installed
+    - name: Install .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+
+    # Add MSBuild to PATH
+    - name: Install MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Restore project dependencies
+      run: dotnet restore
+
+    - name: Build project
+      run: dotnet build --configuration ${{ matrix.configuration }}
+
+    - name: Test project
+      run: dotnet test --configuration ${{ matrix.configuration }}
+  deploy:
+    needs: build_and_test
+    runs-on: windows-latest
+    steps:
+      - name: Deploy application
+        run: echo "TODO - Deployment"
